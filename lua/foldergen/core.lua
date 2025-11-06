@@ -3,8 +3,7 @@
 local M = {}
 
 local function is_file(name)
-  local basename = name:match("[^/]+$") -- get last segment
-  return basename and basename:match("^.+%.[a-zA-Z0-9]+$") ~= nil
+  return name:match("^.+%..+$") ~= nil
 end
 
 local function clean_line(line)
@@ -14,14 +13,10 @@ local function clean_line(line)
   return line
 end
 
-local function tree_depth(line)
-  local depth = 0
-  for c in line:gmatch(".") do
-    if c == "│" or c == "├" or c == "└" then
-      depth = depth + 1
-    end
-  end
-  return depth
+local function count_indent(line)
+  local clean = line:gsub("[│├└─]", "")
+  local _, count = clean:find("^%s*")
+  return count or 0
 end
 
 local function is_tree_style(lines)
@@ -53,9 +48,9 @@ function M.generate_from_text()
   for _, line in ipairs(lines) do
     local clean = clean_line(line)
     if clean ~= "" then
-      local depth = tree_depth(line)
+      local depth = count_indent(line)
 
-      while #stack > 0 and stack[#stack].depth >= depth do
+      while stack[#stack].depth >= depth do
         table.remove(stack)
       end
 
