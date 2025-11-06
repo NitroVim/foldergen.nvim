@@ -1,5 +1,7 @@
 # foldergen.nvim
 
+https://github.com/user-attachments/assets/50a0abf0-69f4-4020-a02c-6778bf9c19c1
+
 `foldergen.nvim` is a **Neovim plugin** that generates folders and empty files from a **tree-style structure** pasted in a buffer.
 
 ---
