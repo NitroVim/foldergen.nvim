@@ -4,7 +4,14 @@ local function is_file(name)
     return name:match("^.+%..+$") ~= nil
 end
 
-local function indent_level(line)
+local function clean_line(line)
+    line = line:gsub("[│├└─]", "")
+    line = line:gsub("^%s+", ""):gsub("%s+$", "")
+    line = line:gsub("%s*#.*", "")
+    return line
+end
+
+local function count_indent(line)
     local _, count = line:find("^%s*")
     return count or 0
 end
@@ -17,14 +24,14 @@ function M.generate_from_text()
     local prev_indent = 0
 
     for _, line in ipairs(lines) do
-        local clean = line:gsub("[│├└─]", ""):gsub("^%s+", "")
-        clean = clean:gsub("%s*#.*", "")
+        local clean = clean_line(line)
         if clean ~= "" then
-            local indent = indent_level(line)
+            local indent = count_indent(line)
+
             if indent > prev_indent then
                 table.insert(stack, stack[#stack])
             elseif indent < prev_indent then
-                local diff = (prev_indent - indent) // 2
+                local diff = math.floor((prev_indent - indent) / 2)
                 for i = 1, diff do
                     table.remove(stack)
                 end
@@ -42,7 +49,7 @@ function M.generate_from_text()
         end
     end
 
-    print("Folder structure generated successfully!")
+    print("Tree-style folder structure generated!")
 end
 
 return M
