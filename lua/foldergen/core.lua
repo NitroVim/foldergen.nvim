@@ -3,7 +3,11 @@
 local M = {}
 
 local function is_file(name)
-  return name:match("^.+%.txt$") or name:match("^.+%.md$")
+  return name:match("^.+%..+$") ~= nil
+end
+
+local function is_supported_file(name)
+  return name:match("%.txt$") or name:match("%.md$")
 end
 
 local function clean_line(line)
@@ -28,6 +32,16 @@ local function is_tree_style(lines)
   return false
 end
 
+local function check_supported_files(lines)
+  for _, line in ipairs(lines) do
+    local clean = clean_line(line)
+    if clean ~= "" and is_file(clean) and not is_supported_file(clean) then
+      return false, clean
+    end
+  end
+  return true
+end
+
 function M.generate_from_text()
   local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
 
@@ -38,6 +52,13 @@ function M.generate_from_text()
 
   if not is_tree_style(lines) then
     print("No tree-style structure detected. Generation skipped.")
+    return
+  end
+
+  local supported, file_name = check_supported_files(lines)
+  if not supported then
+    print("Unsupported file type detected: " .. file_name)
+    print("Please paste a tree structure with only .txt or .md files.")
     return
   end
 
@@ -57,16 +78,12 @@ function M.generate_from_text()
       local parent_path = stack[#stack].path
       local path = parent_path .. "/" .. clean
 
-      local success, msg = pcall(function()
+      local success = pcall(function()
         if is_file(path) then
           vim.fn.writefile({}, path)
         else
-          if clean:match("%S+%.%S+") then
-            print("Skipping unsupported file type: " .. clean)
-          else
-            vim.fn.mkdir(path, "p")
-            table.insert(stack, { path = path, depth = depth })
-          end
+          vim.fn.mkdir(path, "p")
+          table.insert(stack, { path = path, depth = depth })
         end
       end)
 
