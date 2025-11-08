@@ -57,12 +57,16 @@ function M.generate_from_text()
       local parent_path = stack[#stack].path
       local path = parent_path .. "/" .. clean
 
-      local success = pcall(function()
+      local success, msg = pcall(function()
         if is_file(path) then
-          vim.fn.writefile({}, path) -- only creates txt/md files
+          vim.fn.writefile({}, path)
         else
-          vim.fn.mkdir(path, "p")
-          table.insert(stack, { path = path, depth = depth })
+          if clean:match("%S+%.%S+") then
+            print("Skipping unsupported file type: " .. clean)
+          else
+            vim.fn.mkdir(path, "p")
+            table.insert(stack, { path = path, depth = depth })
+          end
         end
       end)
 
